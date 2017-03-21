@@ -22,16 +22,15 @@ G_JUPITER = 24.80
 g = G_TERRE
 
 TAILLE_POPULATION = 150
-NOMBRE_GENERATION = 200
+NOMBRE_GENERATION = 300
 
 NOMBRE_GENE = 11
 
 HAUTEUR_COUPE = 5
-HAUTEUR_RANDOM_TAUX = 75
-MUTATION_RANDOM_TAUX = 0
+HAUTEUR_RANDOM_TAUX = 80
+MUTATION_RANDOM_TAUX = 1
 
-OFFSET = 500
-PORTEE = 300
+PORTEE = 500
 
 global lstIndividu
 lstIndividu = []
@@ -49,40 +48,41 @@ lstMoyenneScore = []
 lstVarianceScore = []
 
 lstMaxPortee= []
-lstMaxTnt   = []
 lstMaxScore = []
 lstMinScore = []
 
 def evaluate():
 	lstPortee = []
-	lstTNT = []
 	lstScore  = []
 	lstScoreMoyenne = []
 	totalScore = 0
 
-	for individu in lstIndividu:
+	for i in range(0, len(lstIndividu)):
+		individu = lstIndividu[i]
 		portee, tnt = calculPorteAndTNT(individu[0], individu[1], individu[2], individu[3], individu[4], individu[5], individu[6], individu[7], individu[8], individu[9], individu[10])
 
 		lstPortee.append(portee)
-		lstTNT.append(tnt)
 
-	MAX_TNT = max(lstTNT)
-	for i in range(0, len(lstPortee)):
-		eval_porte = int(lstPortee[i]*100/PORTEE)
-		eval_tnt   = int(lstTNT[i]*100/MAX_TNT)
+		eval_porte = portee*100/PORTEE
 		
-		score = (eval_porte + eval_tnt)
-		if(limites(individu) == True):
-			score = 0.01
+		score = eval_porte
+
+		#print("Portee: " + str(portee))
+		#print("Score: " + str(score))
+		if(limites(individu) == True or score < 0 or score > 200):
+			score = 1
+		elif(score > 100 and  score < 200):
+			score = 100 - abs(100-score)
+		else: 
+			score = 1
 
 		lstScoreMoyenne.append(int(score))
 		totalScore += score
-		lstScore.append(int(totalScore))
+		lstScore.append(int(score))
 
 
 
-	lstMaxPortee.append(max(lstPortee))
-	lstMaxTnt.append(max(lstTNT))
+	lstMaxPortee.append(np.mean(lstPortee))
 	lstMaxScore.append(max(lstScoreMoyenne))
 	lstMinScore.append(min(lstScoreMoyenne))
 	moyenne = np.mean(lstScoreMoyenne)
@@ -93,29 +93,37 @@ def evaluate():
 
 	return lstScore
 
-def generate_couple(lstScore):
-	scoreMax = lstScore[len(lstScore)-1]
+
+'''
+Tournament !
+'''
+def generate_couple(lstScore):	
+
 	lstCouple = []
-	offset = random.randint(0, 100)%scoreMax
-	tmp = 0
-	i = 0
-
+	couple = []
 	while(len(lstCouple) != TAILLE_POPULATION/2):
-		couple = []
-		while(len(couple) != 2):
-			#print(str(tmp) + " < " + str(offset) + " < " + str(lstScore[i]))
-			if(tmp <= offset and offset <= lstScore[i]):
-				if(len(couple) == 0 or couple[0] != lstIndividu[i]):
-					couple.append(lstIndividu[i])
+		
+		combattants    = []
+		meilleur_score = -1
+		meilleur_individu = -1
 
+		while(len(combattants) != int(PORTEE/10)):
+			
+			individu_random = random.randint(0, len(lstIndividu)-1)
+			
+			if(individu_random not in combattants):
+				combattants.append(individu_random)
+				score_individu = lstScore[individu_random]
+				if(score_individu > meilleur_score):
+					meilleur_score = score_individu
+					meilleur_individu = individu_random 
 
-			tmp = lstScore[i]
-			i += 1
-			if(i == len(lstScore) - 1):
-				tmp = 0
-				i   = 0
-				offset = (offset+OFFSET)%scoreMax			
-		lstCouple.append(couple)
+		if(len(couple) == 0 or couple[0] != lstIndividu[meilleur_individu]):
+			couple.append(lstIndividu[meilleur_individu])
+
+		if(len(couple) == 2):	
+			lstCouple.append(couple)
+			couple = []
 
 	return lstCouple
 
@@ -170,7 +178,7 @@ if __name__ == "__main__":
 	plt.subplot(221)
 	t = np.arange(0, NOMBRE_GENERATION, 1)
 	plt.plot(t, lstMoyenneScore)
-	plt.axis([0, NOMBRE_GENERATION, 0, 200])
+	plt.axis([0, NOMBRE_GENERATION, 0, 100])
 	plt.title('Moyenne des scores')
 	plt.grid(True)
 
@@ -196,7 +204,7 @@ if __name__ == "__main__":
 	plt.subplot(224)
 	plt.plot(t, lstMaxPortee)
 	plt.axis([0, NOMBRE_GENERATION, 0, PORTEE*2])
-	plt.title('Meilleur portée par génération')
+	plt.title('Moyenne des portées par génération')
 	plt.grid(True)
 
 

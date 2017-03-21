@@ -29,12 +29,12 @@ lc  -> Int -> La longueur de la corde (en mètres)
 lv  -> Int -> Longueur à vide (en mètres)
 '''
 def longueur_vide(lb, lc):
-	f = lb**2-((1/4)*(lc**2))
+	f = lb**2-lc**2
 	if(f > 0):
 		lv = sqrt(f)
 	else:
 		lv = 0
-	return lv/4
+	return lv/2
 
 '''
 Calcul de la longueur du déplacement de la flèche
