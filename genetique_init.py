@@ -35,31 +35,39 @@ PORTEE = 500
 global lstIndividu
 lstIndividu = []
 
+
+
+lstMoyenneScore = []
+lstVarianceScore = []
+
+lstMaxPortee = []
+lstMaxScore  = []
+lstMinScore  = []
+lstScore     = []
+
+lstTNT    = []
+lstPortee = []
+
 #Génération de la population
 def generate_population():
 	for i in range(0, TAILLE_POPULATION):
 		individu = []
 		for g in range(0, NOMBRE_GENE):
 			individu.append(generateGene(g))
-
+		
+		portee, tnt = calculPorteAndTNT(individu[0], individu[1], individu[2], individu[3], individu[4], individu[5], individu[6], individu[7], individu[8], individu[9], individu[10])
+		
+		lstPortee.append(portee)
+		lstTNT.append(tnt)		
 		lstIndividu.append(individu)
 
-lstMoyenneScore = []
-lstVarianceScore = []
+		lstScore.append(evaluate(portee, tnt))
 
-lstMaxPortee= []
-lstMaxScore = []
-lstMinScore = []
-
-def evaluate():
-	lstPortee = []
+def evaluate(portee, tnt):
 	lstScore  = []
 	lstScoreMoyenne = []
 	totalScore = 0
-
-	for i in range(0, len(lstIndividu)):
 		individu = lstIndividu[i]
-		portee, tnt = calculPorteAndTNT(individu[0], individu[1], individu[2], individu[3], individu[4], individu[5], individu[6], individu[7], individu[8], individu[9], individu[10])
 
 		lstPortee.append(portee)
 
@@ -141,12 +149,22 @@ def create_enfant(lstCouple):
 			hauteurSecond = NOMBRE_GENE - HAUTEUR_COUPE
 
 		#On définit nos deux enfants par rapport à la coupe de base
-		enfant1 = couple[0][:hauteurFirst] + couple[1][-hauteurSecond:]
-		enfant2 = couple[1][:hauteurSecond] + couple[0][-hauteurFirst:]
+		enfant1 = mutation(couple[0][:hauteurFirst] + couple[1][-hauteurSecond:])
+		enfant2 = mutation(couple[1][:hauteurSecond] + couple[0][-hauteurFirst:])
+
+		#Calcul de la TNT et de la Portee de l'individu
+		portee1, tnt2 = calculPorteAndTNT(enfant1[0], enfant1[1], enfant1[2], enfant1[3], enfant1[4], enfant1[5], enfant1[6], enfant1[7], enfant1[8], enfant1[9], enfant1[10])
+		portee2, tnt2 = calculPorteAndTNT(enfant2[0], enfant2[1], enfant2[2], enfant2[3], enfant2[4], enfant2[5], enfant2[6], enfant2[7], enfant2[8], enfant2[9], enfant2[10])
+
+		lstPortee.append(portee1)
+		lstPortee.append(portee2)
+
+		lstTNT.append(tnt1)
+		lstTNT.append(tnt2)
 
 		#On ajoute les enfants, après la mutation
-		newLstIndividu.append(mutation(enfant1))
-		newLstIndividu.append(mutation(enfant2))
+		newLstIndividu.append(enfant1)
+		newLstIndividu.append(enfant2)
 
 	return newLstIndividu
 
