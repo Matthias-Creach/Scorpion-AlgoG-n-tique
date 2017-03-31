@@ -30,12 +30,11 @@ HAUTEUR_COUPE = 5
 HAUTEUR_RANDOM_TAUX = 80
 MUTATION_RANDOM_TAUX = 1
 
-PORTEE = 500
+PORTEE = 300
 
 global lstIndividu
+
 lstIndividu = []
-
-
 
 lstMoyenneScore = []
 lstVarianceScore = []
@@ -54,41 +53,45 @@ def generate_population():
 		individu = []
 		for g in range(0, NOMBRE_GENE):
 			individu.append(generateGene(g))
-		
+
 		portee, tnt = calculPorteAndTNT(individu[0], individu[1], individu[2], individu[3], individu[4], individu[5], individu[6], individu[7], individu[8], individu[9], individu[10])
-		
+
 		lstPortee.append(portee)
-		lstTNT.append(tnt)		
+		lstTNT.append(tnt)
 		lstIndividu.append(individu)
 
-		lstScore.append(evaluate(portee, tnt))
-
-def evaluate(portee, tnt):
+MAX_TNT = 0
+def evaluate():
+	global MAX_TNT
 	lstScore  = []
 	lstScoreMoyenne = []
 	totalScore = 0
+
+	if(max(lstTNT) > MAX_TNT):
+		MAX_TNT = max(lstTNT)
+
+	for i in range(0, len(lstIndividu)):
 		individu = lstIndividu[i]
+		portee   = lstPortee[i]
+		tnt      = lstTNT[i]
 
 		lstPortee.append(portee)
-
 		eval_porte = portee*100/PORTEE
-		
-		score = eval_porte
+		eval_tnt   = tnt*100/MAX_TNT
 
-		#print("Portee: " + str(portee))
-		#print("Score: " + str(score))
+		#On ramène à 85% le score portee et 15%
+		score = eval_porte*0.90 + eval_tnt*0.10
+
 		if(limites(individu) == True or score < 0 or score > 200):
 			score = 1
 		elif(score > 100 and  score < 200):
 			score = 100 - abs(100-score)
-		else: 
+		else:
 			score = 1
 
 		lstScoreMoyenne.append(int(score))
 		totalScore += score
 		lstScore.append(int(score))
-
-
 
 	lstMaxPortee.append(np.mean(lstPortee))
 	lstMaxScore.append(max(lstScoreMoyenne))
@@ -105,31 +108,30 @@ def evaluate(portee, tnt):
 '''
 Tournament !
 '''
-def generate_couple(lstScore):	
-
+def generate_couple(lstScore):
 	lstCouple = []
 	couple = []
 	while(len(lstCouple) != TAILLE_POPULATION/2):
-		
+
 		combattants    = []
 		meilleur_score = -1
 		meilleur_individu = -1
 
 		while(len(combattants) != int(PORTEE/10)):
-			
+
 			individu_random = random.randint(0, len(lstIndividu)-1)
-			
+
 			if(individu_random not in combattants):
 				combattants.append(individu_random)
 				score_individu = lstScore[individu_random]
 				if(score_individu > meilleur_score):
 					meilleur_score = score_individu
-					meilleur_individu = individu_random 
+					meilleur_individu = individu_random
 
 		if(len(couple) == 0 or couple[0] != lstIndividu[meilleur_individu]):
 			couple.append(lstIndividu[meilleur_individu])
 
-		if(len(couple) == 2):	
+		if(len(couple) == 2):
 			lstCouple.append(couple)
 			couple = []
 
@@ -137,14 +139,16 @@ def generate_couple(lstScore):
 
 
 def create_enfant(lstCouple):
-
 	newLstIndividu = []
+	newLstPortee = []
+	newLstTNT = []
+
 	for couple in lstCouple:
 		randomHauteur = random.randint(0, 100)
 		if(randomHauteur <= HAUTEUR_RANDOM_TAUX):
 			hauteurFirst = random.randint(1, NOMBRE_GENE-1)
 			hauteurSecond = NOMBRE_GENE - hauteurFirst
-		else:			
+		else:
 			hauteurFirst = HAUTEUR_COUPE
 			hauteurSecond = NOMBRE_GENE - HAUTEUR_COUPE
 
@@ -153,20 +157,20 @@ def create_enfant(lstCouple):
 		enfant2 = mutation(couple[1][:hauteurSecond] + couple[0][-hauteurFirst:])
 
 		#Calcul de la TNT et de la Portee de l'individu
-		portee1, tnt2 = calculPorteAndTNT(enfant1[0], enfant1[1], enfant1[2], enfant1[3], enfant1[4], enfant1[5], enfant1[6], enfant1[7], enfant1[8], enfant1[9], enfant1[10])
+		portee1, tnt1 = calculPorteAndTNT(enfant1[0], enfant1[1], enfant1[2], enfant1[3], enfant1[4], enfant1[5], enfant1[6], enfant1[7], enfant1[8], enfant1[9], enfant1[10])
 		portee2, tnt2 = calculPorteAndTNT(enfant2[0], enfant2[1], enfant2[2], enfant2[3], enfant2[4], enfant2[5], enfant2[6], enfant2[7], enfant2[8], enfant2[9], enfant2[10])
 
-		lstPortee.append(portee1)
-		lstPortee.append(portee2)
+		newLstPortee.append(portee1)
+		newLstPortee.append(portee2)
 
-		lstTNT.append(tnt1)
-		lstTNT.append(tnt2)
+		newLstTNT.append(tnt1)
+		newLstTNT.append(tnt2)
 
 		#On ajoute les enfants, après la mutation
 		newLstIndividu.append(enfant1)
 		newLstIndividu.append(enfant2)
 
-	return newLstIndividu
+	return newLstIndividu, newLstPortee, newLstTNT
 
 def mutation(enfant):
 	randomMutation = random.randint(0, 100)
@@ -174,9 +178,6 @@ def mutation(enfant):
 		randomGene = random.randint(0, NOMBRE_GENE-1)
 		enfant[randomGene] = generateGene(randomGene)
 	return enfant
-
-
-
 
 if __name__ == "__main__":
 	generate_population()
@@ -187,7 +188,7 @@ if __name__ == "__main__":
 
 		lstScore = evaluate()
 		lstCouple = generate_couple(lstScore)
-		lstIndividu = create_enfant(lstCouple)
+		lstIndividu, lstPortee, lstTNT = create_enfant(lstCouple)
 
 	#Création des différents graphiques:
 	plt.figure(1)
@@ -227,11 +228,3 @@ if __name__ == "__main__":
 
 
 	plt.show()
-
-
-
-
-
-
-
-
